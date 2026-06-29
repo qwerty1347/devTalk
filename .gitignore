@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+*.tsbuildinfo
+.env
+.env*.local
+.DS_Store
+*.log
+
+# 인덱싱 진행 상황 기록 (로컬 전용)
+.indexed.json
