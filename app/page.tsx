@@ -69,13 +69,17 @@ export default function Home() {
       {/* 헤더 */}
       <header
         style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
           padding: "16px 20px",
           borderBottom: "1px solid #ececec",
           fontWeight: 600,
           fontSize: 18,
         }}
       >
-        📓 devTalk
+        <img src="/logo.svg" alt="devTalk" width={28} height={28} />
+        devTalk
       </header>
 
       {/* 대화 영역 */}
@@ -92,7 +96,7 @@ export default function Home() {
               textAlign: "center",
             }}
           >
-            <div style={{ fontSize: 40, marginBottom: 12 }}>💬</div>
+            {/* <div style={{ fontSize: 40, marginBottom: 12 }}>💬</div> */}
             <p style={{ margin: 0 }}>내 개발 기록에 대해 무엇이든 물어보세요.</p>
             <p style={{ margin: "4px 0 0", fontSize: 14 }}>
               예: &ldquo;도커 빌드 느릴 때 어떻게 했었지?&rdquo;
