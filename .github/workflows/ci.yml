@@ -1,0 +1,33 @@
+name: CI
+
+# main 브랜치에 push하거나, main으로 PR을 올릴 때 자동 실행
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 저장소 코드 가져오기
+      - uses: actions/checkout@v4
+
+      # 2. Node.js 설치 (+ npm 캐시로 빠르게)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # 3. 의존성 설치 (lock 파일 기준 정확히)
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. 타입 체크
+      - name: Type check
+        run: npx tsc --noEmit
+
+      # 5. 빌드 검사 (실제 배포처럼 빌드되는지 확인)
+      - name: Build
+        run: npm run build
