@@ -9,3 +9,11 @@ out
 
 # 인덱싱 진행 상황 기록 (로컬 전용)
 .indexed.json
+.indexed-github.json
+.indexed-local.json
+
+# 비밀 키 파일 (서비스 계정 JSON 등 — 절대 커밋 금지)
+storage/
+*.pem
+*-service-account*.json
+gcp-key*.json

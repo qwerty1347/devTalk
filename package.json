@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "index": "tsx scripts/index.ts"
+    "index": "tsx scripts/index.ts",
+    "index:github": "tsx scripts/index-github.ts",
+    "index:local": "tsx scripts/index-local.ts",
+    "reset": "tsx scripts/reset.ts"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",
