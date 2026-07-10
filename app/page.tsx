@@ -78,7 +78,7 @@ export default function Home() {
           fontSize: 18,
         }}
       >
-        <img src="/logo.svg" alt="devTalk" width={28} height={28} />
+        <img src="/logo.svg" alt="devTalk" width={36} height={36} />
         devTalk
       </header>
 

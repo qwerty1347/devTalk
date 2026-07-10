@@ -1,38 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
+import { embed, chat } from "@/lib/gemini";
+import { search } from "@/lib/pinecone";
 
-// 🚧 임시 목업(mock) — 디자인/UI 확인용 하드코딩 버전.
-// 키 연결 없이 동작합니다. 실제 기능 붙일 땐 원래 버전으로 되돌리세요.
+// 채팅 서버리스 함수: 질문 → 검색 → Gemini 답변
 export async function POST(req: NextRequest) {
-  const { question } = await req.json();
+  try {
+    const { question } = await req.json();
+    if (!question || typeof question !== "string") {
+      return NextResponse.json(
+        { error: "question이 필요합니다." },
+        { status: 400 }
+      );
+    }
 
-  // 실제 호출처럼 약간 지연 (로딩 상태 보이게)
-  await new Promise((r) => setTimeout(r, 600));
+    // 1. 질문을 임베딩 (검색용 task_type)
+    const queryVector = await embed(question, "RETRIEVAL_QUERY");
 
-  const answer = `(샘플 답변) "${question}" 에 대한 답이에요.
+    // 2. Pinecone에서 관련 노트 검색
+    const matches = await search(queryVector, 5);
 
-이건 하드코딩된 목업입니다. 실제로는 여기에 Pinecone에서 검색한
-내 개발 기록을 근거로 Gemini가 생성한 답변이 들어갑니다.
+    // 3. 검색 결과로 컨텍스트 구성
+    const context = matches
+      .map((m, i) => {
+        const md = m.metadata as Record<string, unknown>;
+        return `[자료 ${i + 1}] (출처: ${md?.fileName})\n${md?.text}`;
+      })
+      .join("\n\n");
 
-예를 들어 도커 빌드가 느릴 땐 멀티스테이지 빌드와 레이어 캐시를
-활용했고, .dockerignore 로 불필요한 파일을 제외했습니다.`;
+    // 4. Gemini로 답변 생성
+    const answer = await chat(
+      question,
+      context || "(검색된 자료가 없습니다.)"
+    );
 
-  const sources = [
-    {
-      fileName: "docker-최적화-메모.md",
-      driveUrl: "https://drive.google.com/file/d/sample1/view",
-      score: 0.91,
-    },
-    {
-      fileName: "빌드-속도-개선.txt",
-      driveUrl: "https://drive.google.com/file/d/sample2/view",
-      score: 0.84,
-    },
-    {
-      fileName: "스크린샷-2025.png",
-      driveUrl: "https://drive.google.com/file/d/sample3/view",
-      score: 0.77,
-    },
-  ];
+    // 5. 답변 + 참고한 출처 반환
+    const sources = matches.map((m) => {
+      const md = m.metadata as Record<string, unknown>;
+      return {
+        fileName: md?.fileName,
+        driveUrl: md?.driveUrl,
+        score: m.score,
+      };
+    });
 
-  return NextResponse.json({ answer, sources });
+    return NextResponse.json({ answer, sources });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "알 수 없는 오류";
+    console.error(e);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

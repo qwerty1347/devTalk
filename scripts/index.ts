@@ -4,9 +4,7 @@
 // - 하위 폴더까지 재귀 탐색
 // - 이미 인덱싱한 파일은 건너뜀(증분). 중간에 끊겨도 다시 돌리면 이어서 진행
 // - 파일이 수정되면(modifiedTime 변경) 다시 인덱싱
-import { config } from "dotenv";
-config({ path: ".env.local" }); // .env.local 우선
-config({ path: ".env" }); // 없는 값은 .env에서 보충 (이미 있는 값은 덮어쓰지 않음)
+import "../lib/loadEnv"; // ⚠️ 반드시 다른 import보다 먼저 (환경변수 선로드)
 
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import {
