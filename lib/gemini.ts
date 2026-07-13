@@ -1,6 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+// 지연 초기화: next build의 page data 수집 단계(환경변수 없음)에서
+// 생성자가 터지지 않도록, 실제 사용 시점에 클라이언트를 만든다.
+let _ai: GoogleGenAI | null = null;
+function getAI() {
+  if (!_ai) _ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+  return _ai;
+}
 
 export const EMBED_MODEL = "gemini-embedding-001";
 export const EMBED_DIM = 768; // Pinecone 인덱스 차원과 반드시 일치
@@ -43,7 +49,7 @@ function normalize(v: number[]): number[] {
 export async function embed(text: string, taskType: TaskType): Promise<number[]> {
   const res = await withRetry(
     () =>
-      ai.models.embedContent({
+      getAI().models.embedContent({
         model: EMBED_MODEL,
         contents: text,
         config: { taskType, outputDimensionality: EMBED_DIM },
@@ -67,7 +73,7 @@ ${question}`;
 
   const res = await withRetry(
     () =>
-      ai.models.generateContent({
+      getAI().models.generateContent({
         model: CHAT_MODEL,
         contents: prompt,
       }),
@@ -80,7 +86,7 @@ ${question}`;
 export async function describeImage(base64: string, mimeType: string): Promise<string> {
   const res = await withRetry(
     () =>
-      ai.models.generateContent({
+      getAI().models.generateContent({
         model: CHAT_MODEL,
         contents: [
           {

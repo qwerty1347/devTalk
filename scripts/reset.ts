@@ -4,13 +4,13 @@
 import "../lib/loadEnv"; // ⚠️ 반드시 다른 import보다 먼저 (환경변수 선로드)
 
 import { existsSync, unlinkSync } from "fs";
-import { index } from "../lib/pinecone";
+import { deleteAllVectors } from "../lib/pinecone";
 
 const MANIFESTS = [".indexed.json", ".indexed-github.json", ".indexed-local.json"];
 
 async function main() {
   console.log("🗑  Pinecone 인덱스의 모든 벡터 삭제 중...");
-  await index.deleteAll();
+  await deleteAllVectors();
   console.log("✅ Pinecone 인덱스를 비웠습니다.");
 
   for (const m of MANIFESTS) {
