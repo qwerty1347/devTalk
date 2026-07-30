@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, type FormEvent } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type Source = { fileName: string; driveUrl: string; score: number };
 type Message = {
@@ -8,6 +10,16 @@ type Message = {
   content: string;
   sources?: Source[];
 };
+
+// 답변은 마크다운으로 온다. remark-gfm 을 붙여야 표(GFM 확장)가 렌더링된다.
+// rehype-raw 는 붙이지 말 것 — 노트 속 HTML 이 그대로 DOM 에 주입된다.
+function Answer({ text }: { text: string }) {
+  return (
+    <div className="md">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+    </div>
+  );
+}
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -39,7 +51,14 @@ export default function Home() {
       setMessages((m) => [
         ...m,
         data.error
-          ? { role: "assistant", content: `오류: ${data.error}` }
+          ? {
+              role: "assistant",
+              // dev 환경에서는 서버가 detail(원문 에러)을 함께 내려준다. 코드블록으로 보여줘
+              // 터미널을 안 봐도 브라우저에서 원인을 바로 확인할 수 있게 한다.
+              content: data.detail
+                ? `**오류:** ${data.error}\n\n\`\`\`json\n${data.detail}\n\`\`\``
+                : `**오류:** ${data.error}`,
+            }
           : { role: "assistant", content: data.answer, sources: data.sources ?? [] },
       ]);
     } catch (err) {
@@ -113,21 +132,23 @@ export default function Home() {
               marginBottom: 16,
             }}
           >
-            <div style={{ maxWidth: "78%" }}>
+            <div style={{ maxWidth: msg.role === "user" ? "78%" : "92%" }}>
               <div
                 style={{
                   padding: "12px 16px",
                   borderRadius: 16,
-                  whiteSpace: "pre-wrap",
+                  // 마크다운에 pre-wrap 이 걸리면 줄바꿈이 이중으로 먹어 문단이 벌어진다
+                  whiteSpace: msg.role === "user" ? "pre-wrap" : "normal",
                   lineHeight: 1.6,
                   fontSize: 15,
                   background: msg.role === "user" ? "#111" : "#f4f4f5",
                   color: msg.role === "user" ? "#fff" : "#111",
                   borderBottomRightRadius: msg.role === "user" ? 4 : 16,
                   borderBottomLeftRadius: msg.role === "user" ? 16 : 4,
+                  overflowX: "auto",
                 }}
               >
-                {msg.content}
+                {msg.role === "user" ? msg.content : <Answer text={msg.content} />}
               </div>
 
               {/* 참고 기록 (assistant만) */}
@@ -226,6 +247,102 @@ export default function Home() {
           전송
         </button>
       </form>
+
+      {/* 답변(.md) 마크다운 스타일 — 페이지에 한 번만 주입 */}
+      <style jsx global>{`
+        .md > *:first-child {
+          margin-top: 0;
+        }
+        .md > *:last-child {
+          margin-bottom: 0;
+        }
+        .md h1,
+        .md h2,
+        .md h3,
+        .md h4 {
+          font-size: 15px;
+          font-weight: 700;
+          margin: 16px 0 6px;
+        }
+        .md p,
+        .md li {
+          line-height: 1.65;
+        }
+        .md p {
+          margin: 6px 0;
+        }
+        .md ul,
+        .md ol {
+          padding-left: 20px;
+          margin: 6px 0;
+        }
+        .md li {
+          margin: 2px 0;
+        }
+        .md hr {
+          border: none;
+          border-top: 1px solid #e2e2e5;
+          margin: 14px 0;
+        }
+        .md a {
+          color: #0070f3;
+        }
+        .md blockquote {
+          margin: 8px 0;
+          padding: 2px 0 2px 12px;
+          border-left: 3px solid #d4d4d8;
+          color: #52525b;
+        }
+
+        /* 표 — 좁은 화면에서 가로 스크롤 */
+        .md table {
+          display: block;
+          overflow-x: auto;
+          width: max-content;
+          max-width: 100%;
+          border-collapse: collapse;
+          margin: 10px 0;
+          font-size: 14px;
+        }
+        .md th,
+        .md td {
+          border: 1px solid #e2e2e5;
+          padding: 7px 11px;
+          text-align: left;
+          vertical-align: top;
+          white-space: nowrap;
+        }
+        .md th {
+          background: #ececee;
+          font-weight: 600;
+        }
+        .md tbody tr:nth-child(even) {
+          background: #fafafa;
+        }
+
+        /* 코드 */
+        .md code {
+          background: #e8e8ea;
+          padding: 1.5px 5px;
+          border-radius: 4px;
+          font-size: 13px;
+          font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+        }
+        .md pre {
+          background: #1e1e20;
+          color: #e6e6e6;
+          padding: 12px 14px;
+          border-radius: 10px;
+          overflow-x: auto;
+          margin: 10px 0;
+        }
+        .md pre code {
+          background: none;
+          padding: 0;
+          color: inherit;
+          font-size: 12.5px;
+        }
+      `}</style>
     </div>
   );
 }
