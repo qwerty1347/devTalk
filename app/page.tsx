@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect, type FormEvent } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  isValidElement,
+  type ComponentProps,
+  type FormEvent,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -11,12 +18,83 @@ type Message = {
   sources?: Source[];
 };
 
+// 클립보드 복사. https/localhost 가 아니면 navigator.clipboard 가 막히므로
+// (예: http://192.168.x.x:3000 으로 접속) textarea + execCommand 로 폴백한다.
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+// 코드블록: 우상단에 언어 라벨 + 복사 버튼을 얹는다.
+// 텍스트는 ref 로 DOM 에서 직접 읽는다 (AST 를 되짚는 것보다 단순하고 정확)
+function Pre({ children, ...props }: ComponentProps<"pre">) {
+  const ref = useRef<HTMLPreElement>(null);
+  const [copied, setCopied] = useState(false);
+
+  const child = Array.isArray(children) ? children[0] : children;
+  const lang =
+    (isValidElement<{ className?: string }>(child) &&
+      /language-(\w+)/.exec(child.props.className ?? "")?.[1]) ||
+    "";
+
+  async function onCopy() {
+    const ok = await copyText(ref.current?.textContent ?? "");
+    if (!ok) return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  return (
+    <div className="codewrap">
+      <div className="codebar">
+        {lang && <span className="codelang">{lang}</span>}
+        <button type="button" className="copybtn" onClick={onCopy} aria-label="코드 복사">
+          {copied ? "✓ 복사됨" : "복사"}
+        </button>
+      </div>
+      <pre ref={ref} {...props}>
+        {children}
+      </pre>
+    </div>
+  );
+}
+
 // 답변은 마크다운으로 온다. remark-gfm 을 붙여야 표(GFM 확장)가 렌더링된다.
 // rehype-raw 는 붙이지 말 것 — 노트 속 HTML 이 그대로 DOM 에 주입된다.
 function Answer({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function onCopyAll() {
+    const ok = await copyText(text);
+    if (!ok) return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
   return (
     <div className="md">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ pre: Pre }}>
+        {text}
+      </ReactMarkdown>
+      <button type="button" className="copyall" onClick={onCopyAll}>
+        {copied ? "✓ 답변 복사됨" : "답변 전체 복사"}
+      </button>
     </div>
   );
 }
@@ -332,15 +410,77 @@ export default function Home() {
           background: #1e1e20;
           color: #e6e6e6;
           padding: 12px 14px;
-          border-radius: 10px;
+          border-radius: 0 0 10px 10px;
           overflow-x: auto;
-          margin: 10px 0;
+          margin: 0;
         }
         .md pre code {
           background: none;
           padding: 0;
           color: inherit;
           font-size: 12.5px;
+        }
+
+        /* 코드블록 헤더 (언어 라벨 + 복사 버튼) */
+        .codewrap {
+          margin: 10px 0;
+        }
+        .codebar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          background: #2a2a2e;
+          border-radius: 10px 10px 0 0;
+          padding: 5px 8px 5px 12px;
+          min-height: 30px;
+        }
+        .codelang {
+          font-size: 11.5px;
+          color: #a1a1aa;
+          font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+        }
+        .copybtn {
+          margin-left: auto;
+          border: none;
+          background: transparent;
+          color: #a1a1aa;
+          font-size: 11.5px;
+          padding: 3px 8px;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: background 0.12s, color 0.12s;
+        }
+        .copybtn:hover {
+          background: #3f3f46;
+          color: #fafafa;
+        }
+
+        /* 답변 전체 복사 — 평소엔 숨기고 버블에 마우스를 올리면 보인다 */
+        .copyall {
+          display: block;
+          margin: 10px 0 0 auto;
+          border: 1px solid #dcdce0;
+          background: #fff;
+          color: #71717a;
+          font-size: 11.5px;
+          padding: 4px 10px;
+          border-radius: 999px;
+          cursor: pointer;
+          opacity: 0;
+          transition: opacity 0.15s, color 0.12s;
+        }
+        .md:hover .copyall {
+          opacity: 1;
+        }
+        .copyall:hover {
+          color: #111;
+        }
+        /* 터치 기기는 hover 가 없으므로 항상 보이게 */
+        @media (hover: none) {
+          .copyall {
+            opacity: 1;
+          }
         }
       `}</style>
     </div>
