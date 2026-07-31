@@ -62,7 +62,7 @@ GEMINI_API_KEY=
 
 # Pinecone
 PINECONE_API_KEY=
-PINECONE_INDEX=devnotes
+PINECONE_INDEX=dev-note
 
 # Google Drive (서비스 계정)
 GOOGLE_SERVICE_ACCOUNT_EMAIL=

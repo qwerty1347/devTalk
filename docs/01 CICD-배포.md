@@ -76,7 +76,7 @@ PR 생성  → Preview(미리보기) 배포 자동 생성
 |------|------|
 | `GEMINI_API_KEY` | Google AI Studio |
 | `PINECONE_API_KEY` | Pinecone 콘솔 |
-| `PINECONE_INDEX` | `devnotes` |
+| `PINECONE_INDEX` | `dev-note` |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | 서비스 계정 |
 | `GOOGLE_PRIVATE_KEY` | 서비스 계정 키 |
 | `DRIVE_FOLDER_ID` | 인덱싱 폴더 |
