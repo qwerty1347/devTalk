@@ -45,8 +45,20 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ answer, sources });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "알 수 없는 오류";
     console.error(e);
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Google 원문 JSON이 그대로 노출되지 않도록 사용자용 문구로 치환한다.
+    const raw = e instanceof Error ? e.message : "";
+    const message = /RESOURCE_EXHAUSTED|UNAVAILABLE|429|503/.test(raw)
+      ? "지금 AI 서버가 혼잡하거나 무료 사용량을 초과했습니다. 잠시 후 다시 시도해 주세요."
+      : "답변 생성 중 오류가 발생했습니다.";
+    return NextResponse.json(
+      {
+        error: message,
+        // 개발 환경에서만 원문을 함께 내려, 브라우저에서 바로 원인을 볼 수 있게 한다.
+        // (프로덕션에서는 내부 정보가 노출되지 않도록 빠진다)
+        ...(process.env.NODE_ENV !== "production" ? { detail: raw } : {}),
+      },
+      { status: 500 }
+    );
   }
 }

@@ -5,8 +5,12 @@ import { Pinecone } from "@pinecone-database/pinecone";
 let _index: ReturnType<Pinecone["index"]> | null = null;
 function getIndex() {
   if (!_index) {
+    // 폴백을 두면 환경변수를 빠뜨렸을 때 존재하지 않는 인덱스를 조용히 바라보게 된다.
+    // (Vercel 에 PINECONE_INDEX 를 등록하지 않은 경우 등) 즉시 터지는 편이 안전하다.
+    const name = process.env.PINECONE_INDEX;
+    if (!name) throw new Error("PINECONE_INDEX 가 설정되지 않았습니다.");
     const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
-    _index = pc.index(process.env.PINECONE_INDEX || "devnotes");
+    _index = pc.index(name);
   }
   return _index;
 }

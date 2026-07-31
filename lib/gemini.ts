@@ -10,7 +10,15 @@ function getAI() {
 
 export const EMBED_MODEL = "gemini-embedding-001";
 export const EMBED_DIM = 768; // Pinecone 인덱스 차원과 반드시 일치
-export const CHAT_MODEL = "gemini-2.5-flash";
+// 2.5-flash 는 신규 사용자 차단(404 NOT_FOUND)이라 쓸 수 없다.
+// 무료 티어 쿼터는 "모델별로" 따로 잡히므로(GenerateRequestsPerDayPerProjectPerModel),
+// 한 모델이 429/503 이면 다음 모델로 넘어가면 살아난다. 앞쪽이 우선순위.
+export const CHAT_MODELS = [
+  "gemini-3.5-flash-lite", // 가장 빠르고 혼잡이 덜하다
+  "gemini-3.5-flash",
+  "gemini-3.6-flash",
+];
+export const CHAT_MODEL = CHAT_MODELS[0]; // describeImage 등 단일 모델 용도
 
 type TaskType = "RETRIEVAL_DOCUMENT" | "RETRIEVAL_QUERY";
 
@@ -65,21 +73,36 @@ export async function chat(question: string, context: string): Promise<string> {
 아래 "참고 자료"는 사용자가 직접 정리한 노트에서 검색된 내용입니다.
 이 자료를 근거로 한국어로 답하고, 자료에 없는 내용은 추측하지 말고 모른다고 솔직히 말하세요.
 
+[답변 형식]
+- GitHub Flavored Markdown으로 작성합니다. (UI가 표·코드펜스를 그대로 렌더링합니다)
+- 비교·분류·옵션 나열처럼 항목이 3개 이상이고 공통 속성으로 정리되면 반드시 표를 씁니다.
+  (예: 메서드별 용도, A vs B 차이, 상황별 조치)
+- 표의 셀은 짧게 씁니다. 긴 설명이 필요하면 표로 요약한 뒤 아래에 풀어씁니다.
+- 코드는 반드시 언어를 명시한 코드펜스로 감쌉니다. (\`\`\`python)
+- 서론·맺음말·"참고:" 같은 사족은 쓰지 않고 바로 본론부터 시작합니다.
+- 구분선(---)은 쓰지 않습니다. 제목 계층으로 구분합니다.
+
 [참고 자료]
 ${context}
 
 [질문]
 ${question}`;
 
-  const res = await withRetry(
-    () =>
-      getAI().models.generateContent({
-        model: CHAT_MODEL,
-        contents: prompt,
-      }),
-    "chat"
-  );
-  return res.text ?? "";
+  // 모델별로 쿼터가 따로이므로, 한 모델이 소진/혼잡이면 다음 모델로 폴백한다.
+  let lastErr: unknown;
+  for (const model of CHAT_MODELS) {
+    try {
+      const res = await withRetry(
+        () => getAI().models.generateContent({ model, contents: prompt }),
+        `chat(${model})`
+      );
+      return res.text ?? "";
+    } catch (e) {
+      lastErr = e;
+      console.warn(`   ↪ ${model} 실패 — 다음 모델로 폴백`);
+    }
+  }
+  throw lastErr;
 }
 
 // 이미지를 Gemini Flash로 설명(텍스트화)한다. 이 텍스트를 임베딩해서 검색에 쓴다.

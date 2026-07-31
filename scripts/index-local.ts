@@ -2,8 +2,8 @@
 // 실행:  npm run index:local
 //
 // .env(.env.local)에 필요:
-//   LOCAL_DOCS_DIR=D:/projects/dev-notes   (역슬래시 대신 슬래시 권장)
-//   GITHUB_REPO=qwerty1347/dev-notes        (선택. 출처 링크를 GitHub로 만들 때)
+//   LOCAL_DOCS_DIR=D:/projects/devNote     (역슬래시 대신 슬래시 권장)
+//   GITHUB_REPO=qwerty1347/devNote          (선택. 출처 링크를 GitHub로 만들 때)
 //   GITHUB_BRANCH=main                      (선택)
 import "../lib/loadEnv"; // ⚠️ 반드시 다른 import보다 먼저 (환경변수 선로드)
 
@@ -44,7 +44,7 @@ function sourceUrl(rel: string): string {
 
 async function main() {
   if (!DIR) {
-    throw new Error("LOCAL_DOCS_DIR 가 .env 에 없습니다. 예: LOCAL_DOCS_DIR=D:/projects/dev-notes");
+    throw new Error("LOCAL_DOCS_DIR 가 .env 에 없습니다. 예: LOCAL_DOCS_DIR=D:/projects/devNote");
   }
   if (!existsSync(DIR)) {
     throw new Error(`폴더를 찾을 수 없습니다: ${DIR}`);
