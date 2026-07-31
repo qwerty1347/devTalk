@@ -1,6 +1,6 @@
 # devTalk
 
-dev-notes 저장소의 문서를 임베딩·검색해, 질문하면 Gemini가 그 기록을 근거로
+devNote 저장소의 문서를 임베딩·검색해, 질문하면 Gemini가 그 기록을 근거로
 답해주는 서버리스 RAG 채팅. 소스는 **GitHub repo / 로컬 폴더 / Google Drive** 중
 원하는 것을 쓸 수 있다.
 
@@ -125,7 +125,7 @@ npm run index:local    # 로컬 폴더
 
 실행 예시 (문서 1개 추가 후):
 ```
-📦 qwerty1347/dev-notes (@main) 문서 목록 가져오는 중...
+📦 qwerty1347/devNote (@main) 문서 목록 가져오는 중...
    23개 문서(.md/.txt) 발견
 
 📄 Database/Elasticsearch 쿼리 가이드 (auth_apikey).md
@@ -217,6 +217,13 @@ GEMINI_API_KEY, PINECONE_API_KEY, PINECONE_INDEX
 
 > ⚠️ **`rehype-raw` 는 붙이지 말 것.** 노트 속 HTML이 그대로 DOM에 주입된다.
 > 기본 설정은 HTML을 이스케이프하므로 XSS 위험이 없다.
+
+## 실행 화면
+
+![DEV RAG 챗](/public/screenshots/rag.gif)
+![DEV RAG 챗1](/public/screenshots/rag1.png)
+![DEV RAG 챗2](/public/screenshots/rag2.png)
+![DEV RAG 챗3](/public/screenshots/rag3.png)
 
 ## 트러블슈팅
 
