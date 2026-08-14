@@ -1,6 +1,6 @@
 # devTalk
 
-devNote 저장소의 문서를 임베딩·검색해, 질문하면 Gemini 가 그 기록을 근거로 답해주는 서버리스 RAG 채팅.
+[devNote](https://github.com/qwerty1347/devNote) 저장소의 문서를 임베딩·검색해, 질문하면 Gemini 가 그 기록을 근거로 답해주는 서버리스 RAG 채팅.
 
 문서 소스는 **GitHub repo / 로컬 폴더 / Google Drive** 중 원하는 것을 쓸 수 있습니다.
 
