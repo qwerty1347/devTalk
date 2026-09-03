@@ -10,6 +10,7 @@ import {
 } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import IndexPanel from "./IndexPanel";
 
 type Source = { fileName: string; driveUrl: string; score: number };
 type Message = {
@@ -104,6 +105,20 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [showIndex, setShowIndex] = useState(false);
+  const taps = useRef(0);
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 히든 트리거: 헤더 오른쪽 끝 빈 영역을 1.5초 안에 5번 누르면 인덱싱 패널이 열린다.
+  function onCornerTap() {
+    taps.current++;
+    if (tapTimer.current) clearTimeout(tapTimer.current);
+    tapTimer.current = setTimeout(() => (taps.current = 0), 1500);
+    if (taps.current >= 5) {
+      taps.current = 0;
+      setShowIndex(true);
+    }
+  }
 
   // 새 메시지 오면 맨 아래로 스크롤
   useEffect(() => {
@@ -177,6 +192,21 @@ export default function Home() {
       >
         <img src="/logo.svg" alt="devTalk" width={36} height={36} />
         devTalk
+
+        {/* 히든 인덱싱 트리거 — 보이지 않는 영역 */}
+        <div
+          onClick={onCornerTap}
+          aria-hidden="true"
+          style={{
+            marginLeft: "auto", // 헤더 오른쪽 끝으로 밀어붙인다
+            width: 48,
+            height: 36,
+            cursor: "default",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            WebkitTapHighlightColor: "transparent", // 모바일에서 탭 시 회색 박스 방지
+          }}
+        />
       </header>
 
       {/* 대화 영역 */}
@@ -325,6 +355,8 @@ export default function Home() {
           전송
         </button>
       </form>
+
+      {showIndex && <IndexPanel onClose={() => setShowIndex(false)} />}
 
       {/* 답변(.md) 마크다운 스타일 — 페이지에 한 번만 주입 */}
       <style jsx global>{`
