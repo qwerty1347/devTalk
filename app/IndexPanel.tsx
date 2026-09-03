@@ -56,11 +56,7 @@ export default function IndexPanel({ onClose }: { onClose: () => void }) {
     if (!res.ok || !res.body) {
       const body = (await res.text()).trim();
       const msg =
-        res.status === 401
-          ? "시크릿이 올바르지 않습니다."
-          : res.status === 503
-          ? "서버에 INDEX_SECRET 이 설정되지 않았습니다."
-          : `${res.status} ${body}`;
+        res.status === 401 ? "비밀번호가 올바르지 않습니다." : `${res.status} ${body}`;
       throw new Error(msg);
     }
 
@@ -174,7 +170,7 @@ export default function IndexPanel({ onClose }: { onClose: () => void }) {
               value={secret}
               onChange={(e) => setSecret(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && start()}
-              placeholder="INDEX_SECRET"
+              placeholder="비밀번호"
               className="ix-input"
               autoFocus
             />

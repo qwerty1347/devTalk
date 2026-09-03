@@ -23,13 +23,11 @@ export const maxDuration = 60; // Vercel Hobby 상한
 // 마지막 파일 처리 도중 함수가 잘리지 않게 한다.
 const BUDGET_MS = 45_000;
 
+// 인덱싱 패널 비밀번호. 바꾸려면 이 한 줄만 고치면 된다.
+const SECRET = "admin";
+
 export async function POST(req: NextRequest) {
-  const secret = process.env.INDEX_SECRET;
-  // 시크릿을 안 걸었으면 기능 자체를 닫는다. (실수로 공개 배포되는 것 방지)
-  if (!secret) {
-    return new Response("indexing disabled (INDEX_SECRET 미설정)", { status: 503 });
-  }
-  if (req.headers.get("x-index-secret") !== secret) {
+  if (req.headers.get("x-index-secret") !== SECRET) {
     return new Response("unauthorized", { status: 401 });
   }
   if (!process.env.GITHUB_REPO) {
