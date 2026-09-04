@@ -16,7 +16,6 @@ type Totals = { processed: number; chunks: number; skipped: number };
 
 export default function IndexPanel({ onClose }: { onClose: () => void }) {
   const [phase, setPhase] = useState<Phase>("confirm");
-  const [secret, setSecret] = useState("");
   const [log, setLog] = useState<string[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [result, setResult] = useState<Result | null>(null);
@@ -24,11 +23,6 @@ export default function IndexPanel({ onClose }: { onClose: () => void }) {
   const logRef = useRef<HTMLDivElement>(null);
 
   const running = phase === "running";
-
-  // 새로고침해도 다시 안 치도록 (탭 닫으면 사라짐)
-  useEffect(() => {
-    setSecret(sessionStorage.getItem("devtalk:index-secret") ?? "");
-  }, []);
 
   // 로그는 항상 맨 아래를 보여준다
   useEffect(() => {
@@ -48,16 +42,11 @@ export default function IndexPanel({ onClose }: { onClose: () => void }) {
 
   // 한 라운드 = 요청 1회. paused 로 끝나면 true 를 돌려주고 바깥에서 다시 부른다.
   async function runOnce(totals: Totals): Promise<boolean> {
-    const res = await fetch("/api/index", {
-      method: "POST",
-      headers: { "x-index-secret": secret },
-    });
+    const res = await fetch("/api/index", { method: "POST" });
 
     if (!res.ok || !res.body) {
       const body = (await res.text()).trim();
-      const msg =
-        res.status === 401 ? "비밀번호가 올바르지 않습니다." : `${res.status} ${body}`;
-      throw new Error(msg);
+      throw new Error(`${res.status} ${body}`);
     }
 
     const reader = res.body.getReader();
@@ -107,8 +96,7 @@ export default function IndexPanel({ onClose }: { onClose: () => void }) {
   }
 
   async function start() {
-    if (running || !secret.trim()) return;
-    sessionStorage.setItem("devtalk:index-secret", secret);
+    if (running) return;
     setPhase("running");
     setLog([]);
     setProgress({ done: 0, total: 0 });
@@ -165,26 +153,11 @@ export default function IndexPanel({ onClose }: { onClose: () => void }) {
               문서는 건너뜁니다.
             </p>
 
-            <input
-              type="password"
-              value={secret}
-              onChange={(e) => setSecret(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && start()}
-              placeholder="비밀번호"
-              className="ix-input"
-              autoFocus
-            />
-
             <div className="ix-actions">
               <button type="button" className="ix-btn ix-btn-ghost" onClick={onClose}>
                 취소
               </button>
-              <button
-                type="button"
-                className="ix-btn ix-btn-primary"
-                onClick={start}
-                disabled={!secret.trim()}
-              >
+              <button type="button" className="ix-btn ix-btn-primary" onClick={start} autoFocus>
                 실행
               </button>
             </div>
@@ -333,20 +306,6 @@ export default function IndexPanel({ onClose }: { onClose: () => void }) {
         .ix-desc b {
           color: #111;
           font-weight: 600;
-        }
-
-        .ix-input {
-          width: 100%;
-          padding: 11px 14px;
-          font-size: 16px; /* 16px 미만이면 iOS 에서 확대됨 */
-          border: 1px solid #ddd;
-          border-radius: 11px;
-          outline: none;
-          text-align: center;
-          box-sizing: border-box;
-        }
-        .ix-input:focus {
-          border-color: #111;
         }
 
         .ix-actions {

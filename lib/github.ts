@@ -4,7 +4,9 @@
 // - 기본 브랜치 조회 + 파일 트리 조회에만 GitHub API 사용 (총 2회 호출)
 // - 실제 파일 내용은 raw.githubusercontent.com에서 받아옴 (API rate limit 미적용)
 
-const REPO = process.env.GITHUB_REPO || ""; // "owner/repo"
+// "owner/repo". 환경변수가 없으면 이 값을 쓴다.
+// (Vercel 에 GITHUB_REPO 를 등록하지 않아도 웹 인덱싱이 동작하도록)
+const REPO = process.env.GITHUB_REPO || "qwerty1347/devNote";
 
 export type RepoFile = {
   path: string; // repo 내 경로 (예: docs/intro.md)

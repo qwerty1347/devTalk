@@ -4,7 +4,6 @@
 // 스크립트와 다른 점 두 가지 (서버리스 제약):
 //  1) 진행 기록을 파일(.indexed-github.json)이 아니라 Pinecone 에서 조회한다. (디스크가 없음)
 //  2) 함수 실행 시간 상한이 있으므로 예산만큼만 처리하고 paused 를 내려준다. (클라이언트가 이어서 재호출)
-import { NextRequest } from "next/server";
 import {
   getDefaultBranch,
   listRepoDocs,
@@ -23,17 +22,7 @@ export const maxDuration = 60; // Vercel Hobby 상한
 // 마지막 파일 처리 도중 함수가 잘리지 않게 한다.
 const BUDGET_MS = 45_000;
 
-// 인덱싱 패널 비밀번호. 바꾸려면 이 한 줄만 고치면 된다.
-const SECRET = "admin";
-
-export async function POST(req: NextRequest) {
-  if (req.headers.get("x-index-secret") !== SECRET) {
-    return new Response("unauthorized", { status: 401 });
-  }
-  if (!process.env.GITHUB_REPO) {
-    return new Response("GITHUB_REPO 가 설정되지 않았습니다.", { status: 500 });
-  }
-
+export async function POST() {
   const encoder = new TextEncoder();
   const startedAt = Date.now();
 
